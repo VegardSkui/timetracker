@@ -6,7 +6,7 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::str::FromStr;
 use structopt::StructOpt;
-use tt::{Entry, RunningEntry};
+use timetracker::{Entry, RunningEntry};
 
 static DEFAULT_RUNNING_FILE: Lazy<String> =
     Lazy::new(|| format!("{}/.tt_running", env::var("HOME").as_deref().unwrap_or(".")));

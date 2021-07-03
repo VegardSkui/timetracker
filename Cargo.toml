@@ -1,9 +1,10 @@
 [package]
-name = "tt"
+name = "timetracker"
 version = "0.1.0"
 authors = ["Vegard Skui <me@vegardskui.com>"]
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/VegardSkui/timetracker"
+description = "Time tracking on the command line."
 categories = ["command-line-utilities"]
 edition = "2018"
 
