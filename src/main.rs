@@ -25,8 +25,16 @@ struct Opt {
 
 #[derive(Debug, StructOpt)]
 enum Command {
-    Start { account: String },
-    Stop { account: Option<String> },
+    Export {
+        #[structopt(short, long, parse(from_os_str))]
+        output: PathBuf,
+    },
+    Start {
+        account: String,
+    },
+    Stop {
+        account: Option<String>,
+    },
 }
 
 fn main() {
@@ -36,6 +44,29 @@ fn main() {
     log::debug!("{:?}", opt);
 
     match opt.cmd {
+        Command::Export { output } => {
+            // Error if there's already a file located at the output path
+            if output.exists() {
+                panic!("there is already a file at the output path");
+            }
+
+            // Read every entry and format as a timeclock entry
+            let file = OpenOptions::new()
+                .read(true)
+                .open(&opt.file)
+                .expect("could not open file");
+            let timeclock = BufReader::new(file)
+                .lines()
+                .map(|line| line.unwrap())
+                .map(|line| Entry::from_str(&line).unwrap())
+                .map(|entry| entry.format_as_timeclock())
+                .collect::<Vec<String>>()
+                .join("\n");
+
+            // Write the timeclock formatted entries to the output file
+            fs::write(output, timeclock).expect("could not write to output file");
+        }
+
         Command::Start { account } => {
             // Create the new running entry
             let running_entry = RunningEntry {
@@ -54,8 +85,7 @@ fn main() {
                     .lines()
                     .map(|line| line.unwrap())
                     .map(|line| RunningEntry::from_str(&line).unwrap())
-                    .find(|entry| entry.account == account)
-                    .is_some()
+                    .any(|entry| entry.account == account)
                 {
                     panic!(
                         r#"there is already a running entry for the account "{}""#,
@@ -94,10 +124,12 @@ fn main() {
                 Some(account) => running_entries
                     .iter()
                     .position(|entry| entry.account == account)
-                    .expect(&format!(
-                        r#"no running entries for the account "{}" were found"#,
-                        account
-                    )),
+                    .unwrap_or_else(|| {
+                        panic!(
+                            r#"no running entries for the account "{}" were found"#,
+                            account
+                        )
+                    }),
                 None => {
                     if running_entries.len() != 1 {
                         panic!(
