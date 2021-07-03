@@ -29,6 +29,7 @@ enum Command {
         #[structopt(short, long, parse(from_os_str))]
         output: PathBuf,
     },
+    Running,
     Start {
         account: String,
     },
@@ -65,6 +66,21 @@ fn main() {
 
             // Write the timeclock formatted entries to the output file
             fs::write(output, timeclock).expect("could not write to output file");
+        }
+
+        Command::Running => {
+            // Open the file with running entries
+            let running_file = OpenOptions::new()
+                .read(true)
+                .open(&opt.running_file)
+                .expect("could not open running file");
+
+            // Print each running entry
+            BufReader::new(running_file)
+                .lines()
+                .map(|line| line.unwrap())
+                .map(|line| RunningEntry::from_str(&line).unwrap())
+                .for_each(|entry| println!("{}", entry));
         }
 
         Command::Start { account } => {
